@@ -15,8 +15,10 @@ import Profile from "./pages/Profile";
 import Swaps from "./pages/Swaps";
 import Chats from "./pages/Chats";
 import ChatPage from "./pages/ChatPage";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
+import AdminGuard from "./components/AdminGuard";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,7 @@ const App = () => {
               <Route path="/swaps" element={user ? <Swaps /> : <Navigate to="/auth" replace />} />
               <Route path="/chats" element={user ? <Chats /> : <Navigate to="/auth" replace />} />
               <Route path="/chat/:swapId" element={user ? <ChatPage /> : <Navigate to="/auth" replace />} />
+              <Route path="/admin" element={user ? <AdminGuard><Admin /></AdminGuard> : <Navigate to="/auth" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
