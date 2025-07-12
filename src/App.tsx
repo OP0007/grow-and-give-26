@@ -16,6 +16,7 @@ import Swaps from "./pages/Swaps";
 import Chats from "./pages/Chats";
 import ChatPage from "./pages/ChatPage";
 import Admin from "./pages/Admin";
+import AdminAuth from "./pages/AdminAuth";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import AdminGuard from "./components/AdminGuard";
@@ -67,7 +68,8 @@ const App = () => {
               <Route path="/swaps" element={user ? <Swaps /> : <Navigate to="/auth" replace />} />
               <Route path="/chats" element={user ? <Chats /> : <Navigate to="/auth" replace />} />
               <Route path="/chat/:swapId" element={user ? <ChatPage /> : <Navigate to="/auth" replace />} />
-              <Route path="/admin" element={user ? <AdminGuard><Admin /></AdminGuard> : <Navigate to="/auth" replace />} />
+              <Route path="/admin/auth" element={<AdminAuth />} />
+              <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

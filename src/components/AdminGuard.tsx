@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -14,24 +13,30 @@ const AdminGuard = ({ children }: AdminGuardProps) => {
     checkAdminStatus();
   }, []);
 
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const adminToken = localStorage.getItem('admin_token');
       
-      if (!user) {
+      if (!adminToken) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('user_id', user.id)
-        .single();
-
-      setIsAdmin(profile?.is_admin || false);
+      const adminData = JSON.parse(adminToken);
+      
+      // Check if token is still valid (24 hours)
+      const tokenAge = Date.now() - adminData.loginTime;
+      const isTokenValid = tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (!isTokenValid) {
+        localStorage.removeItem('admin_token');
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(true);
+      }
     } catch (error) {
+      localStorage.removeItem('admin_token');
       setIsAdmin(false);
     } finally {
       setLoading(false);
@@ -40,14 +45,14 @@ const AdminGuard = ({ children }: AdminGuardProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-gray-50 to-red-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
       </div>
     );
   }
 
   if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/auth" replace />;
   }
 
   return <>{children}</>;

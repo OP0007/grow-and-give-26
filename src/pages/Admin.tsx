@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquare, ArrowRightLeft, Shield } from 'lucide-react';
+import { Users, MessageSquare, ArrowRightLeft, Shield, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminStats {
@@ -32,11 +33,21 @@ const Admin = () => {
   });
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    toast({
+      title: "Logged out",
+      description: "You have been logged out of the admin panel",
+    });
+    navigate('/admin/auth');
+  };
 
   const loadAdminData = async () => {
     try {
@@ -110,11 +121,21 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-gray-50 to-red-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-8 w-8 text-red-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-red-600" />
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </div>
 
         {/* Stats Cards */}
