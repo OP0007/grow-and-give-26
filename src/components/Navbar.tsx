@@ -84,6 +84,12 @@ const Navbar = () => {
                   My Swaps
                 </Button>
               </Link>
+              <Link to="/chats">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Chats
+                </Button>
+              </Link>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

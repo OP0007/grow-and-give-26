@@ -24,6 +24,22 @@ interface User {
   swap_count: number;
 }
 
+interface Swap {
+  id: string;
+  skill_offered: string;
+  skill_wanted: string;
+  status: string;
+  created_at: string;
+  requester: {
+    name: string;
+    email: string;
+  };
+  provider: {
+    name: string;
+    email: string;
+  };
+}
+
 const Admin = () => {
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
@@ -32,6 +48,7 @@ const Admin = () => {
     activeSwaps: 0
   });
   const [users, setUsers] = useState<User[]>([]);
+  const [swaps, setSwaps] = useState<Swap[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -75,6 +92,24 @@ const Admin = () => {
       if (usersData) {
         setUsers(usersData);
       }
+
+      // Load swaps
+      const { data: swapsData } = await supabase
+        .from('swaps')
+        .select(`
+          id,
+          skill_offered,
+          skill_wanted,
+          status,
+          created_at,
+          requester:profiles!swaps_requester_id_fkey(name, email),
+          provider:profiles!swaps_provider_id_fkey(name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (swapsData) {
+        setSwaps(swapsData);
+      }
     } catch (error) {
       toast({
         title: "Error loading admin data",
@@ -107,6 +142,32 @@ const Admin = () => {
       toast({
         title: "Error updating admin status",
         description: "Failed to update user admin status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateSwapStatus = async (swapId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('swaps')
+        .update({ status: newStatus })
+        .eq('id', swapId);
+
+      if (error) throw error;
+
+      setSwaps(swaps.map(swap => 
+        swap.id === swapId ? { ...swap, status: newStatus } : swap
+      ));
+
+      toast({
+        title: "Swap status updated",
+        description: `Swap status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating swap status",
+        description: "Failed to update swap status",
         variant: "destructive",
       });
     }
@@ -238,9 +299,64 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Swap management features coming soon...</p>
+                <div className="space-y-4">
+                  {swaps.map((swap) => (
+                    <div key={swap.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium">{swap.skill_offered} ↔ {swap.skill_wanted}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {swap.requester?.name} → {swap.provider?.name}
+                            </p>
+                          </div>
+                          <Badge 
+                            variant={swap.status === 'accepted' ? 'default' : swap.status === 'pending' ? 'secondary' : 'destructive'}
+                          >
+                            {swap.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Created: {new Date(swap.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {swap.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => updateSwapStatus(swap.id, 'accepted')}
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => updateSwapStatus(swap.id, 'rejected')}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {swap.status === 'accepted' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateSwapStatus(swap.id, 'completed')}
+                          >
+                            Mark Complete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {swaps.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No swaps found</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
